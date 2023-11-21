@@ -1,11 +1,10 @@
 from sqlalchemy import Column, ForeignKey, Integer, String, Table
 from database import Base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, query
 
 
 AuthorSong = Table('authorsong',
                     Base.metadata,
-                    Column('id', Integer, primary_key=True, index=True),
                     Column('authorId', Integer, ForeignKey('author.id')),
                     Column('songId', Integer, ForeignKey('song.id'))
                    )
@@ -21,7 +20,7 @@ class Song(Base):
     __tablename__ = 'song'
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
+    title = Column(String, index=True)
     authors = relationship('Author', secondary=AuthorSong, backref='Song')
 
 
