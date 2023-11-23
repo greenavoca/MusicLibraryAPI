@@ -1,26 +1,33 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, Table
+from __future__ import annotations
+
+from sqlalchemy import Column, ForeignKey, Table
 from database import Base
-from sqlalchemy.orm import relationship, query
+from sqlalchemy.orm import relationship, Mapped, mapped_column
+
 
 
 AuthorSong = Table('authorsong',
                     Base.metadata,
-                    Column('authorId', Integer, ForeignKey('author.id')),
-                    Column('songId', Integer, ForeignKey('song.id'))
+                    Column('authorId', ForeignKey('author.id'), primary_key=True),
+                    Column('songId', ForeignKey('song.id'), primary_key=True)
                    )
 
 class Author(Base):
     __tablename__ = 'author'
 
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
-    songs = relationship('Song', secondary=AuthorSong, backref='Author')
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str]
+    songs: Mapped[list[Song]] = relationship(secondary=AuthorSong, back_populates='authors')
+
+    def __repr__(self):
+        return f'<Author: {self.name}>'
 
 class Song(Base):
     __tablename__ = 'song'
 
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String, index=True)
-    authors = relationship('Author', secondary=AuthorSong, backref='Song')
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str]
+    authors: Mapped[list[Author]] = relationship(secondary=AuthorSong, back_populates='songs')
 
-
+    def __repr__(self):
+        return f'<Title: {self.title}>'
