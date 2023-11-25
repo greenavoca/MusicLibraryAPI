@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
 from pydantic import BaseModel
+from typing import Optional
 import models
 from database import engine, SessionLocal
 from typing import Annotated
@@ -18,6 +19,13 @@ class FindSongBase(BaseModel):
     title: str
 class FindAuthorBase(BaseModel):
     title: str
+
+class AuthorUpdateBase(BaseModel):
+    new_name: Optional[str] = None
+
+class TitleUpdateBase(BaseModel):
+    new_title: Optional[str] = None
+
 
 def get_db():
     db = SessionLocal()
@@ -81,3 +89,23 @@ async def find_author(song: FindAuthorBase, db: db_dependency):
     for author in q.authors:
         authors_list.append({'author': author.name})
     return {f'{song.title}_authors_list': authors_list}
+
+@app.put('/update-author/{author_id}')
+async def update_author(author_id: int, author: AuthorUpdateBase, db: db_dependency):
+    q = db.query(models.Author).filter_by(id=author_id).first()
+    if q is None:
+        return HTTPException (404, detail='Author not found!')
+    if author.new_name is not None:
+        q.name = author.new_name
+        db.commit()
+    return {'Author updated!'}
+
+@app.put('/update-title/{title_id}')
+async def update_title(title_id: int, title: TitleUpdateBase, db: db_dependency):
+    q = db.query(models.Song).filter_by(id=title_id).first()
+    if q is None:
+        return HTTPException (404, detail='Title not found!')
+    if title.new_title is not None:
+        q.title = title.new_title
+        db.commit()
+    return {'Title updated!'}
