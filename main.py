@@ -10,8 +10,14 @@ app = FastAPI()
 models.Base.metadata.create_all(bind=engine)
 
 class SongBase(BaseModel):
-    title: str
     author: str
+    title: str
+
+class FindSongBase(BaseModel):
+    author: str
+    title: str
+class FindAuthorBase(BaseModel):
+    title: str
 
 def get_db():
     db = SessionLocal()
@@ -55,3 +61,23 @@ async def fetch_all_songs(db: db_dependency):
             'author': author.name,
             'title': song.title})
     return {'song_list': songs_list}
+
+@app.get('/find-title/')
+async def find_title(author: FindSongBase, db: db_dependency):
+    q = db.query(models.Author).filter_by(name=author.author).first()
+    songs_list = []
+    if q is None:
+        return HTTPException(404, detail='Author not found!')
+    for song in q.songs:
+        songs_list.append({'title': song.title})
+    return {f'{author.author}_songs_list': songs_list}
+
+@app.get('/find-author/')
+async def find_author(song: FindAuthorBase, db: db_dependency):
+    q = db.query(models.Song).filter_by(title=song.title).first()
+    authors_list = []
+    if q is None:
+        return HTTPException(404, detail='Author not found!')
+    for author in q.authors:
+        authors_list.append({'author': author.name})
+    return {f'{song.title}_authors_list': authors_list}
