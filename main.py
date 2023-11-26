@@ -55,6 +55,7 @@ async def create_song(song: SongBase, db: db_dependency):
     db_author.songs.append(db_title)
     db.add_all([db_author, db_title])
     db.commit()
+    return {'Song created!'}
 
 @app.get('/songs/')
 async def fetch_all_songs(db: db_dependency):
@@ -95,6 +96,8 @@ async def update_author(author_id: int, author: AuthorUpdateBase, db: db_depende
     q = db.query(models.Author).filter_by(id=author_id).first()
     if q is None:
         return HTTPException (404, detail='Author not found!')
+    if author.new_name.lower() == q.name:
+        return HTTPException(403, detail='Cannot update with the same name!')
     if author.new_name is not None:
         q.name = author.new_name.lower()
         db.commit()
@@ -105,6 +108,8 @@ async def update_title(title_id: int, title: TitleUpdateBase, db: db_dependency)
     q = db.query(models.Song).filter_by(id=title_id).first()
     if q is None:
         return HTTPException (404, detail='Title not found!')
+    if title.new_title.lower() == q.title:
+        return HTTPException(403, detail='Cannot update with the same title!')
     if title.new_title is not None:
         q.title = title.new_title.lower()
         db.commit()
