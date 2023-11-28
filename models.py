@@ -38,12 +38,6 @@ class SongBase(BaseModel):
     author: str
     title: str
 
-class FindSongBase(BaseModel):
-    author: str
-    title: str
-class FindAuthorBase(BaseModel):
-    title: str
-
 class AuthorUpdateBase(BaseModel):
     new_name: Optional[str] = None
 

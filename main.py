@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, status
 import models
 from database import engine, get_db
 from typing import Annotated
@@ -10,7 +10,7 @@ models.Base.metadata.create_all(bind=engine)
 db_dependency = Annotated[Session, Depends(get_db)]
 
 
-@app.post('/create-song/')
+@app.post('/create-song/', status_code=status.HTTP_201_CREATED)
 async def create_song(song: models.SongBase, db: db_dependency):
     q_author = db.query(models.Author).filter_by(name=song.author.lower()).first()
     q_title = db.query(models.Song).filter_by(title=song.title.lower()).first()
@@ -27,7 +27,7 @@ async def create_song(song: models.SongBase, db: db_dependency):
     db_author.songs.append(db_title)
     db.add_all([db_author, db_title])
     db.commit()
-    return {'Song created!'}
+    return {'Message': 'Song created!'}
 
 @app.get('/songs/')
 async def fetch_all_songs(db: db_dependency):
@@ -43,27 +43,27 @@ async def fetch_all_songs(db: db_dependency):
             'title': song.title})
     return {'song_list': songs_list}
 
-@app.get('/find-title/')
-async def find_title(author: models.FindSongBase, db: db_dependency):
-    q = db.query(models.Author).filter_by(name=author.author.lower()).first()
+@app.get('/find-title/{author}')
+async def find_title(author: str, db: db_dependency):
+    q = db.query(models.Author).filter_by(name=author.lower()).first()
     songs_list = []
     if q is None:
         raise HTTPException(404, detail='Author not found!')
     for song in q.songs:
         songs_list.append({'title': song.title})
-    return {f'{author.author}_songs_list': songs_list}
+    return {f'{author}_songs_list': songs_list}
 
-@app.get('/find-author/')
-async def find_author(song: models.FindAuthorBase, db: db_dependency):
-    q = db.query(models.Song).filter_by(title=song.title.lower()).first()
+@app.get('/find-author/{title}')
+async def find_author(title: str, db: db_dependency):
+    q = db.query(models.Song).filter_by(title=title.lower()).first()
     authors_list = []
     if q is None:
-        raise HTTPException(404, detail='Author not found!')
+        raise HTTPException(404, detail='Title not found!')
     for author in q.authors:
         authors_list.append({'author': author.name})
-    return {f'{song.title}_authors_list': authors_list}
+    return {f'{title}_authors_list': authors_list}
 
-@app.put('/update-author/{author_id}')
+@app.put('/update-author/{author_id}', status_code=status.HTTP_202_ACCEPTED)
 async def update_author(author_id: int, author: models.AuthorUpdateBase, db: db_dependency):
     q = db.query(models.Author).filter_by(id=author_id).first()
     if q is None:
@@ -73,9 +73,9 @@ async def update_author(author_id: int, author: models.AuthorUpdateBase, db: db_
     if author.new_name is not None:
         q.name = author.new_name.lower()
         db.commit()
-    return {'Author updated!'}
+    return {'Message': 'Author updated!'}
 
-@app.put('/update-title/{title_id}')
+@app.put('/update-title/{title_id}', status_code=status.HTTP_202_ACCEPTED)
 async def update_title(title_id: int, title: models.TitleUpdateBase, db: db_dependency):
     q = db.query(models.Song).filter_by(id=title_id).first()
     if q is None:
@@ -85,7 +85,7 @@ async def update_title(title_id: int, title: models.TitleUpdateBase, db: db_depe
     if title.new_title is not None:
         q.title = title.new_title.lower()
         db.commit()
-    return {'Title updated!'}
+    return {'Message': 'Title updated!'}
 
 @app.delete('/delete-song/')
 async def delete_song(song: models.SongBase, db: db_dependency):
@@ -97,4 +97,4 @@ async def delete_song(song: models.SongBase, db: db_dependency):
         raise HTTPException(404, detail='Song not found!')
     q.songs.remove(to_delete[0])
     db.commit()
-    return {'Song deleted!'}
+    return {'Message': 'Song deleted!'}
