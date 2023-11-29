@@ -33,7 +33,7 @@ async def create_song(song: models.SongBase, db: db_dependency):
 async def fetch_all_songs(db: db_dependency):
     q_songs = db.query(models.AuthorSong).all()
     if len(q_songs) == 0:
-        return {'List is empty!'}
+        return {'Message': 'List is empty!'}
     songs_list = []
     for author_id, song_id in q_songs:
         author = db.query(models.Author).filter_by(id=author_id).first()
