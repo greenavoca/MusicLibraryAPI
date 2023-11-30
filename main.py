@@ -87,12 +87,12 @@ async def update_title(title_id: int, title: models.TitleUpdateBase, db: db_depe
         db.commit()
     return {'Message': 'Title updated!'}
 
-@app.delete('/delete-song/')
-async def delete_song(song: models.SongBase, db: db_dependency):
-    q = db.query(models.Author).filter_by(name=song.author.lower()).first()
+@app.delete('/delete-song/{author}/{title}')
+async def delete_song(author: str, title: str, db: db_dependency):
+    q = db.query(models.Author).filter_by(name=author.lower()).first()
     if q is None:
         raise HTTPException(404, detail='Song not found!')
-    to_delete = [item for item in q.songs if item.title == song.title.lower()]
+    to_delete = [item for item in q.songs if item.title == title.lower()]
     if not to_delete:
         raise HTTPException(404, detail='Song not found!')
     q.songs.remove(to_delete[0])
